@@ -8,6 +8,7 @@ from tkinter import *
 from tkinter import ttk
 root = Tk()
 temp_dimensions = {"height":'',"width":'',"length":''}
+region_multiplier= {'north island':1,'south island':1.5,'stewart island':2}
 from tkinter import messagebox
 
 def callback(input):
@@ -20,16 +21,31 @@ def callback(input):
         else:
             return False
 
+def clearFrame():
+    # destroy all widgets from frame
+    for widget in root.winfo_children():
+       widget.destroy()
+    return
+
 def calculate():
-    print(temp_dimensions['height'].get())
     if temp_dimensions['height'].get() == '' or temp_dimensions['width'].get() == '' or temp_dimensions['length'].get() == '':
         messagebox.showerror('Python Error', 'Error: This is an Error Message!')
     else:
-        volume = float(temp_dimensions['height'].get())* float(temp_dimensions['width'].get()) * float(temp_dimensions['length'].get())
         total = Label(root,textvariable=float(temp_dimensions['height'].get())* float(temp_dimensions['width'].get()) * float(temp_dimensions['length'].get()))
-        total.grid(column=2,row =0)
-        root.mainloop()
-   
+        total.grid(column=3,row =0)
+        global volume_label
+        volume_label.config(text=total.cget('textvariable'))
+        clearFrame()
+        region_select()
+        
+def region_select():
+    region_var=StringVar()
+    for i, radios in enumerate(region_multiplier):
+        rad = ttk.Radiobutton(root,text=radios,value=region_multiplier[radios],variable=region_var)
+        rad.grid(column=0,row=i)
+    region_confirm = ttk.Button(root,text='confirm',command=lambda:print(region_var.get()))
+    region_confirm.grid(column=0,row=i+1)
+    
 def main():
     root.title("Onlinz")
     root.geometry('400x400')
@@ -43,8 +59,12 @@ def main():
         ents.grid(row=i,column=1)
         temp_dimensions[fields] = ents
 
-    confirm = ttk.Button(root,text='confirm',command=calculate)
-    confirm.grid(column=0,row=4)
+    confirm_button = ttk.Button(root,text='confirm',command=calculate)
+    confirm_button.grid(column=0,row=4)
+    
+    global volume_label
+    volume_label = ttk.Label(root,text='ok')
+    volume_label.grid(column=0,row=5)
 
     root.mainloop()
 
