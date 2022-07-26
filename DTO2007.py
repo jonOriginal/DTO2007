@@ -53,7 +53,7 @@ def get_customer_details():
     for i,fields, in enumerate(customer_details):
         labs = ttk.Label(root,text=fields)
         ents = ttk.Entry(root)
-        ents.config(validate="key", validatecommand=(reg, '%P'),textvariable=customer_details[fields])
+        ents.config(validate="key",textvariable=customer_details[fields])
         labs.grid(row=i,column=0)
         ents.grid(row=i,column=1)
         customer_details[fields] = ents
