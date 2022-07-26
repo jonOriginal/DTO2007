@@ -12,6 +12,13 @@ region_multiplier= {'north island':1,'south island':1.5,'stewart island':2}
 customer_details = {'first name':'','last name':'','address':'','phone':''}
 from tkinter import messagebox
 
+class app(Tk):
+    def __init__(self,x=0):
+        self.x = x
+    
+    def greet(self):
+        print(self.x)
+        
 def callback(input):
     try:
         float(input)
@@ -40,6 +47,7 @@ def calculate():
         region_select()
         
 def region_select():
+    
     region_var=StringVar()
     for i, radios in enumerate(region_multiplier):
         rad = ttk.Radiobutton(root,text=radios,value=region_multiplier[radios],variable=region_var)
@@ -48,7 +56,6 @@ def region_select():
     region_confirm.grid(column=0,row=i+1)
     
 def get_customer_details():
-    clearFrame()
     reg=root.register(callback)
     for i,fields, in enumerate(customer_details):
         labs = ttk.Label(root,text=fields)
@@ -58,11 +65,8 @@ def get_customer_details():
         ents.grid(row=i,column=1)
         customer_details[fields] = ents
 
-def main():
-    root.title("Onlinz")
-    root.geometry('400x400')
+def get_dimensions():
     reg=root.register(callback)
-
     for i,fields, in enumerate(temp_dimensions):
         labs = ttk.Label(root,text=fields)
         ents = ttk.Entry(root)
@@ -73,12 +77,12 @@ def main():
 
     confirm_button = ttk.Button(root,text='confirm',command=calculate)
     confirm_button.grid(column=0,row=4)
-    
-    global volume_label
-    volume_label = ttk.Label(root,text='ok')
-    volume_label.grid(column=0,row=5)
-
+def main():
+    app(5).greet()
+    root.title("Onlinz")
+    root.geometry('400x400')
     root.mainloop()
+    get_dimensions()
 
 if __name__ == "__main__":
     main()
