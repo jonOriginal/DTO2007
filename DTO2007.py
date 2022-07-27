@@ -10,6 +10,8 @@ from tkinter import ttk
 
 from tkinter import messagebox
 
+from pyrsistent import v
+
 class App(tk.Tk):
     def __init__(self, *args, **kwargs):
         super().__init__( *args, **kwargs)
@@ -41,7 +43,7 @@ class StartPage(tk.Frame):
         for i,fields, in enumerate(self.temp_dimensions):
             labs = ttk.Label(self,text=fields)
             ents = ttk.Entry(self)
-            ents.config(validate="key", validatecommand=(reg, '%P'),textvariable=self.temp_dimensions[fields])
+            ents.config(validate='all', validatecommand=(reg, '%P','%V'),textvariable=self.temp_dimensions[fields])
             labs.grid(row=i,column=0)
             ents.grid(row=i,column=1)
             self.temp_dimensions[fields] = ents
@@ -50,12 +52,21 @@ class StartPage(tk.Frame):
         next_button = ttk.Button(self,text="Next",command=lambda:self.confirm_next(parent))
         next_button.grid(row=i+1,column=0)
 
-    def callback(self,input):
+    def callback(self,value,reason):
+        print(value,reason)
         try:
-            float(input)
-            if float(input) > 100:
-                self.error_label.config(text='Please enter a number less than 100')
-            return True
+            float(value)
+            if reason == 'focusout':
+                if float(value) > 100:
+                    self.error_label.config(text='Max 100')
+                elif float(value) < 5:
+                    self.error_label.config(text='Min 5')
+                else:
+                    self.error_label.config(text='')
+                return True
+            if reason == 'key':
+                self.error_label.config(text='')
+                return True
         except:
             if input == '':
                 return True
