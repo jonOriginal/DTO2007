@@ -19,8 +19,12 @@ class App(tk.Tk):
         mainframe.pack(side="top", fill="both", expand=False)
         
         self.temp_dimensions = {"height":'',"width":'',"length":''}
+        
         self.region_multiplier= {'north island':1,'south island':1.5,'stewart island':2}
         self.region_var=tk.DoubleVar()
+        
+        self.base_rates = {0:8.00,6000:12.00,100000:15.00}
+        
         self.customer_details = {'first name':'','last name':'','address':'','phone':''}
 
         self.frame_list = {Start_Page:'',Page_1:'',Page_2:''}
@@ -51,14 +55,14 @@ class Start_Page(tk.Frame):
         if self.region_var.get() == '':
             messagebox.showerror('Empty Fields', 'Please Fill all fields')
         else:
-            print(self.region_var.get())
             parent.switch_frame(Page_1)
 class Page_1(tk.Frame):
     def __init__(self,parent,container):
         super().__init__(container)
         self.temp_dimensions = parent.temp_dimensions
         self.error_container = {"height":'',"width":'',"length":''}
-        
+        self.base_rates = parent.base_rates
+
         self.region_var=parent.region_var
         reg=self.register(self.callback)
     
@@ -78,6 +82,9 @@ class Page_1(tk.Frame):
         
         self.volume_label = ttk.Label(self,text='Cm³',font='arial 16 bold')
         self.volume_label.grid(row=0,column=3)
+        self.price_label = ttk.Label(self,text='$',font='arial 16 bold')
+        self.price_label.grid(row=1,column=3)
+        
         next_button = ttk.Button(self,text="Next",command=lambda:self.confirm_next(parent))
         next_button.grid(row=i+1,column=2,padx=5, pady=5)
         back_button = ttk.Button(self,text="back",command=lambda:parent.switch_frame(Start_Page))
@@ -93,7 +100,7 @@ class Page_1(tk.Frame):
                 else:
                     self.temp_dimensions[name].config(foreground='black')
                     self.error_container[name].config(text='')
-                    self.update_volume()
+                self.update_volume()
             return True
         except:
             if value == '':
@@ -106,6 +113,11 @@ class Page_1(tk.Frame):
         try:
             volume = float(self.temp_dimensions['height'].get()) * float(self.temp_dimensions['width'].get()) * float(self.temp_dimensions['length'].get())
             self.volume_label.config(text=f'{volume*multiplier} Cm³')
+            
+            for i,vol in enumerate(self.base_rates):
+                if volume > vol:
+                    self.price_label.config(text=f'{self.base_rates[vol]*multiplier}$')
+                    
         except:
             pass
     def confirm_next(self,parent):
