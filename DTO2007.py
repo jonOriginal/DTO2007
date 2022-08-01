@@ -5,16 +5,16 @@ DTO2007Y2A V1
 """
 
 import tkinter as tk
-from tkinter import ttk
-
+from tkinter import X, ttk
 from tkinter import messagebox
-from tkinter.tix import *
+from turtle import width
 
 class App(tk.Tk):
     def __init__(self, *args, **kwargs):
         super().__init__( *args, **kwargs)
         self.title("DTO2007Y2A")
-        self.geometry("500x500")
+        self.geometry("500x300")
+        self.resizable(False, False)
         mainframe = ttk.Frame(self)
         mainframe.pack(side="top", fill="both", expand=False)
         
@@ -31,7 +31,7 @@ class App(tk.Tk):
         for i, frame_name in enumerate(self.frame_list):
             frame = frame_name(self,mainframe)
             self.frame_list[frame_name] = frame
-            frame.grid(row=0, column=0, sticky="nsew")
+            frame.grid(row=0, column=0, sticky="nsew",)
         self.switch_frame(Start_Page)
     
     def switch_frame(self, page_name):
@@ -40,19 +40,24 @@ class App(tk.Tk):
 class Start_Page(tk.Frame):
     def __init__(self,parent,container):
         super().__init__(container)
+        self.rowconfigure(7, weight=5)
+        page_title = tk.Label(self, text="Please select the region you are sending from", font=("Helvetica", 14))
+        page_title.configure(background='#FFFFFF',width=45,height=3,relief='raised',borderwidth=2)
+        page_title.grid(row=0, column=0, columnspan=4, sticky="w")
+        
         self.region_multiplier = parent.region_multiplier
         self.region_var=parent.region_var
         
         for i, radios in enumerate(self.region_multiplier):
             self.rad = ttk.Radiobutton(self,text=radios,value=self.region_multiplier[radios],variable=self.region_var)
-            self.rad.grid(column=0,row=i,padx=5,pady=5,sticky='w')
+            self.rad.grid(column=0,row=i+1,padx=10,pady=5,sticky='w')
+        
         next_button = ttk.Button(self,text='next',command=lambda:self.confirm_next(parent))
-        next_button.grid(column=2,row=i+1,padx=5,pady=5,sticky='w')
-        back_button = ttk.Button(self,text='back',command=lambda:parent.switch_frame(Start_Page))
-        back_button.grid(column=0,row=i+1,padx=5,pady=5,sticky='w')
+        next_button.grid(column=3,row=1,padx=5,pady=5,sticky='e')
         
     def confirm_next(self,parent):
-        if self.region_var.get() == '':
+        print(self.region_var.get())
+        if self.region_var.get() == 0:
             messagebox.showerror('Empty Fields', 'Please Fill all fields')
         else:
             parent.switch_frame(Page_1)
@@ -63,32 +68,38 @@ class Page_1(tk.Frame):
         self.error_container = {"height":'',"width":'',"length":''}
         self.base_rates = parent.base_rates
 
+        page_title = tk.Label(self, text="Please Enter the package dimesions:", font=("Helvetica", 14))
+        page_title.configure(background='#FFFFFF',width=45,height=3,relief='raised',borderwidth=2)
+        page_title.grid(row=0, column=0, columnspan=4, sticky="w")
+        
         self.region_var=parent.region_var
         reg=self.register(self.callback)
     
         for i,fields, in enumerate(self.temp_dimensions):
-            labs = ttk.Label(self,text=fields,)
+            labs = ttk.Label(self,text=fields+' (cm)',)
             self.ents = ttk.Entry(self)
             errs = ttk.Label(self,text='',foreground='red')
 
             self.ents.config(validate='all', validatecommand=(reg, '%P','%V',fields),textvariable=self.temp_dimensions[fields])
 
-            errs.grid(row=i,column=2,sticky='w',padx=5,pady=5)
-            labs.grid(row=i,column=0,padx=5, pady=5)
-            self.ents.grid(row=i,column=1,padx=5, pady=5)
+            errs.grid(row=i+1,column=1,sticky='w',padx=5,pady=5)
+            labs.grid(row=i+1,column=0,padx=5, pady=5)
+            self.ents.grid(row=i+1,column=1,padx=5, pady=5)
 
             self.error_container[fields] = errs
             self.temp_dimensions[fields] = self.ents
         
-        self.volume_label = ttk.Label(self,text='Cm³',font='arial 16 bold')
-        self.volume_label.grid(row=0,column=3)
-        self.price_label = ttk.Label(self,text='$',font='arial 16 bold')
-        self.price_label.grid(row=1,column=3)
+        self.price_label = ttk.Label(self,text='$')
+        self.price_label.grid(row=2,column=2)
         
-        next_button = ttk.Button(self,text="Next",command=lambda:self.confirm_next(parent))
-        next_button.grid(row=i+1,column=2,padx=5, pady=5)
+        self.check_button = ttk.Button(self,text="Check",command=lambda:self.check_volume())
+        self.check_button.grid(row=1,column=2,padx=5, pady=5)
+        
+        self.next_button = ttk.Button(self,text="Next",command=lambda:parent.switch_frame(Page_2),state='disabled')
+        self.next_button.grid(row=1,column=3,padx=5, pady=5,sticky='e')
+        
         back_button = ttk.Button(self,text="back",command=lambda:parent.switch_frame(Start_Page))
-        back_button.grid(row=i+1,column=0,padx=5, pady=5)
+        back_button.grid(row=2,column=3,padx=5, pady=5,sticky='e')
 
     def callback(self,value,reason,name):
         try:
@@ -100,7 +111,7 @@ class Page_1(tk.Frame):
                 else:
                     self.temp_dimensions[name].config(foreground='black')
                     self.error_container[name].config(text='')
-                self.update_volume()
+                self.check_volume()
             return True
         except:
             if value == '':
@@ -108,42 +119,42 @@ class Page_1(tk.Frame):
             else:
                 return False
         
-    def update_volume(self):
+    def check_volume(self):
         multiplier=float(self.region_var.get())
+        self.confirm_next()
         try:
             volume = float(self.temp_dimensions['height'].get()) * float(self.temp_dimensions['width'].get()) * float(self.temp_dimensions['length'].get())
-            self.volume_label.config(text=f'{volume*multiplier} Cm³')
-            
             for i,vol in enumerate(self.base_rates):
                 if volume > vol:
                     self.price_label.config(text=f'{self.base_rates[vol]*multiplier}$')
                     
         except:
             pass
-    def confirm_next(self,parent):
+    def confirm_next(self):
         values = [self.temp_dimensions['height'].get(),self.temp_dimensions['width'].get(),self.temp_dimensions['length'].get()]
-        if all(values) == False:
-            messagebox.showerror('Empty Fields', 'Please Fill all fields')
-        elif all(map(lambda x: float(x) >= 5 and float(x) <= 100,values)) == False:
-            messagebox.showerror('Invalid Fields', 'Please enter a value between 5 and 100')
-        else:
-            parent.switch_frame(Page_2)  
+        if all(values) == True and all(map(lambda x: float(x) >= 5 and float(x) <= 100,values)) == True:
+            self.next_button.config(state='normal')
+
 class Page_2(tk.Frame):
     def __init__(self,parent,container):
         super().__init__(container)
+        page_title = tk.Label(self, text="Please enter your details:", font=("Helvetica", 14))
+        page_title.configure(background='#FFFFFF',width=45,height=3,relief='raised',borderwidth=2)
+        page_title.grid(row=0, column=0, columnspan=4, sticky="w")
+        
         self.customer_details = parent.customer_details
         for i,fields, in enumerate(self.customer_details):
             labs = ttk.Label(self,text=fields)
             ents = ttk.Entry(self)
             ents.config(validate="key",textvariable=self.customer_details[fields])
-            labs.grid(row=i,column=0)
-            ents.grid(row=i,column=1)
+            labs.grid(row=i+1,column=0,padx=5,pady=5,sticky='w')
+            ents.grid(row=i+1,column=1,padx=5,pady=5,sticky='w')
             self.customer_details[fields] = ents
             
         next_button = ttk.Button(self,text="Next",command=lambda:self.confirm_next(parent))
-        next_button.grid(row=i+1,column=2)
+        next_button.grid(row=1,column=3,padx=5, pady=5,sticky='e')
         back_button = ttk.Button(self,text="back",command=lambda:parent.switch_frame(Page_1))
-        back_button.grid(row=i+1,column=0)
+        back_button.grid(row=2,column=3,padx=5, pady=5,sticky='e')
     
     def confirm_next(self,parent):
         values = [self.customer_details['first name'].get(),self.customer_details['last name'].get(),self.customer_details['address'].get(),self.customer_details['phone'].get()]
@@ -151,7 +162,6 @@ class Page_2(tk.Frame):
             messagebox.showerror('Empty Fields', 'Please Fill all fields')
         else:
             parent.switch_frame(Page_1)
-
         
 def main():
     app = App()
