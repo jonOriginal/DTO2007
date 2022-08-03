@@ -8,15 +8,16 @@ import tkinter as tk
 
 from tkinter import X, ttk
 from tkinter import messagebox
+from turtle import width
 
 class App(tk.Tk):
     def __init__(self, *args, **kwargs):
         super().__init__( *args, **kwargs)
         self.title("DTO2007Y2A")
-        self.geometry("500x350")
+        self.geometry("500x320")
         self.resizable(False, False)
         mainframe = ttk.Frame(self)
-        mainframe.pack(side="top", fill="both", expand=False)
+        mainframe.pack(side="top", fill="none", expand=False)
         
         self.final_price = 0
         
@@ -44,29 +45,25 @@ class App(tk.Tk):
 class Start_Page(tk.Frame):
     def __init__(self,parent,container):
         super().__init__(container)
+        self.rowconfigure(2, weight=1)
         
-        page_title = tk.Label(self, text="Please select the region you are sending from", font=("Helvetica", 14))
+        
+        page_title = tk.Label(self, text="Onlinz Shopping returns", font=("Helvetica", 14))
         page_title.configure(background='#FFFFFF',width=45,height=3,relief='raised',borderwidth=2)
         page_title.grid(row=0, column=0, columnspan=4, sticky="w")
+
+        main_label = tk.Label(self, text="Welcome to the Onlinz Shopping returns application. *more info*", font=("Helvetica", 12))
+        main_label.grid(row=1, column=0, columnspan=4, sticky="w")
         
-        self.region_multiplier = parent.region_multiplier
-        self.region_var = parent.region_var
-        
-        for i, radios in enumerate(self.region_multiplier):
-            self.rad = ttk.Radiobutton(self,text=radios,value=self.region_multiplier[radios],variable=self.region_var,state='normal')
-            self.rad.grid(column=0,row=i+1,padx=10,pady=5,sticky='w')
-        
-        next_button = ttk.Button(self,text='next',command=lambda:self.confirm_next(parent))
-        next_button.grid(column=3,row=1,padx=5,pady=5,sticky='e')
-        
-    def confirm_next(self,parent):
-        if self.region_var.get() == 0:
-            messagebox.showerror('Empty Fields', 'Please Fill all fields')
-        else:
-            parent.switch_frame(Page_1)
+        next_button = ttk.Button(self,text='Next',command=lambda:parent.switch_frame(Page_1))
+        next_button.grid(column=3,row=2,padx=5,pady=5,sticky='se')
+
 class Page_1(tk.Frame):
     def __init__(self,parent,container):
         super().__init__(container)
+        self.config(width=500, height=350)
+        self.grid_size = (3,4)
+        
         self.error_container = {"height":'',"width":'',"length":''}
         self.base_rates = parent.base_rates
         self.temp_dimensions = parent.temp_dimensions
@@ -127,10 +124,10 @@ class Page_1(tk.Frame):
         navigation_grid.grid(row=5,column=2,sticky='se')
         
         self.next_button = ttk.Button(navigation_grid,text="Next",command=lambda:parent.switch_frame(Page_2),state='disabled')
-        self.next_button.grid(row=1,column=3,padx=5, pady=5,sticky='ne')
+        self.next_button.grid(row=1,column=3,padx=2, pady=5,sticky='se')
         
-        back_button = ttk.Button(navigation_grid,text="back",command=lambda:parent.switch_frame(Start_Page))
-        back_button.grid(row=2,column=3,padx=5, pady=5,sticky='ne')
+        back_button = ttk.Button(navigation_grid,text="Back",command=lambda:parent.switch_frame(Start_Page))
+        back_button.grid(row=2,column=3,padx=2, pady=5,sticky='se')
 
     def callback(self,value,reason,name):
         try:
