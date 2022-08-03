@@ -47,16 +47,36 @@ class Start_Page(tk.Frame):
         super().__init__(container)
         self.rowconfigure(2, weight=1)
         
+        reg = self.register(self.callback)
+        
+        info_text="Welcome to the Onlinz Shopping returns application.\n\nIf your product is returned undamaged within 30 days, you will receive\na full refund of the purchase price.\n\nThis program will help you calculate the courier cost and collect \ninformation needed to return the product."
+        
+        self.customer_details = parent.customer_details
         
         page_title = tk.Label(self, text="Onlinz Shopping returns", font=("Helvetica", 14))
         page_title.configure(background='#FFFFFF',width=45,height=3,relief='raised',borderwidth=2)
         page_title.grid(row=0, column=0, columnspan=4, sticky="w")
 
-        main_label = tk.Label(self, text="Welcome to the Onlinz Shopping returns application. *more info*", font=("Helvetica", 12))
-        main_label.grid(row=1, column=0, columnspan=4, sticky="w")
+        main_label = tk.Label(self, justify='left',text=info_text, font=("Helvetica", 12))
+        main_label.grid(row=1, column=0, columnspan=4, sticky="w",padx=10,pady=10)     
         
-        next_button = ttk.Button(self,text='Next',command=lambda:parent.switch_frame(Page_1))
-        next_button.grid(column=3,row=2,padx=5,pady=5,sticky='se')
+        name_label = ttk.Label(self, text="Name:")
+        name_label.grid(row=2, column=0, sticky="ws",padx=10,pady=10)
+        
+        self.name_entry = ttk.Entry(self,validate='key', validatecommand=(reg,'%P'))
+        self.name_entry.grid(row=2, column=1, sticky="sw",padx=10,pady=10)
+        
+        self.next_button = ttk.Button(self,text='Next',command=lambda:parent.switch_frame(Page_1),state='disabled')
+        self.next_button.grid(column=3,row=2,padx=5,pady=5,sticky='se')
+
+    def callback(self,value):
+        if value:
+            self.customer_details['first name'] = value
+            self.next_button.configure(state='normal')
+            return True  
+        if value == '':
+            self.next_button.configure(state='disabled')
+            return True
 
 class Page_1(tk.Frame):
     def __init__(self,parent,container):
@@ -124,10 +144,10 @@ class Page_1(tk.Frame):
         navigation_grid.grid(row=5,column=2,sticky='se')
         
         self.next_button = ttk.Button(navigation_grid,text="Next",command=lambda:parent.switch_frame(Page_2),state='disabled')
-        self.next_button.grid(row=1,column=3,padx=2, pady=5,sticky='se')
+        self.next_button.grid(row=2,column=3,padx=2, pady=5,sticky='se')
         
         back_button = ttk.Button(navigation_grid,text="Back",command=lambda:parent.switch_frame(Start_Page))
-        back_button.grid(row=2,column=3,padx=2, pady=5,sticky='se')
+        back_button.grid(row=1,column=3,padx=2, pady=5,sticky='se')
 
     def callback(self,value,reason,name):
         try:
