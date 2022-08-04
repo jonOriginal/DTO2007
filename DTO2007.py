@@ -4,21 +4,23 @@ DTO2007Y2A V1
 5/07/22
 """
 
+from ast import Lambda
+from sqlite3 import paramstyle
 import tkinter as tk
 
 from tkinter import X, ttk
 from tkinter import messagebox
 from turtle import width
+from wsgiref import validate
 
 class App(tk.Tk):
     def __init__(self, *args, **kwargs):
         super().__init__( *args, **kwargs)
         self.title("DTO2007Y2A")
-        self.geometry("500x320")
+        self.geometry("500x350")
         self.resizable(False, False)
         mainframe = ttk.Frame(self)
         mainframe.pack(side="top", fill="none", expand=False)
-        
         self.final_price = 0
         
         self.temp_dimensions = {"height":'',"width":'',"length":''}
@@ -29,7 +31,6 @@ class App(tk.Tk):
         self.base_rates = {0:8.00,6000:12.00,100000:15.00}
         
         self.customer_details = {'first name':'','last name':'','address':'','phone':''}
-
         self.frame_list = {Start_Page:'',Page_1:'',Page_2:'',Page_3:''}
         for i, frame_name in enumerate(self.frame_list):
             frame = frame_name(self,mainframe)
@@ -41,26 +42,30 @@ class App(tk.Tk):
         
     def switch_frame(self, page_name):
         self.frame_list[page_name].tkraise()
-    
+
 class Start_Page(tk.Frame):
     def __init__(self,parent,container):
         super().__init__(container)
+        self.config(width=500, height=350)
+        self.grid_propagate(False)
         self.rowconfigure(2, weight=1)
-        
+        self.parent = parent
         reg = self.register(self.callback)
         
         info_text="Welcome to the Onlinz Shopping returns application.\n\nIf your product is returned undamaged within 30 days, you will receive\na full refund of the purchase price.\n\nThis program will help you calculate the courier cost and collect \ninformation needed to return the product."
         
-        self.customer_details = parent.customer_details
+        title_frame = tk.Frame(self,width=500,height=70,background='#FFFFFF',relief='raised',borderwidth=2)
+        title_frame.grid_propagate(0)
+        title_frame.grid(row=0, column=0, columnspan=4, sticky="w")
         
-        page_title = tk.Label(self, text="Onlinz Shopping returns", font=("Helvetica", 14))
-        page_title.configure(background='#FFFFFF',width=45,height=3,relief='raised',borderwidth=2)
-        page_title.grid(row=0, column=0, columnspan=4, sticky="w")
+        page_title = tk.Label(title_frame, text="Onlinz Shopping returns", font=("Helvetica", 14),justify="center")
+        page_title.configure(background='#FFFFFF')
+        page_title.grid(row=0, column=0,pady=20,padx=20)
 
         main_label = tk.Label(self, justify='left',text=info_text, font=("Helvetica", 12))
         main_label.grid(row=1, column=0, columnspan=4, sticky="w",padx=10,pady=10)     
         
-        name_label = ttk.Label(self, text="Name:")
+        name_label = ttk.Label(self, text="First Name:")
         name_label.grid(row=2, column=0, sticky="ws",padx=10,pady=10)
         
         self.name_entry = ttk.Entry(self,validate='key', validatecommand=(reg,'%P'))
@@ -68,13 +73,14 @@ class Start_Page(tk.Frame):
         
         self.next_button = ttk.Button(self,text='Next',command=lambda:parent.switch_frame(Page_1),state='disabled')
         self.next_button.grid(column=3,row=2,padx=5,pady=5,sticky='se')
-
     def callback(self,value):
+        parent = self.parent
         if value:
-            self.customer_details['first name'] = value
+            parent.customer_details['first name'] = value
             self.next_button.configure(state='normal')
             return True  
         if value == '':
+            parent.customer_details['first name'] = ''
             self.next_button.configure(state='disabled')
             return True
 
@@ -82,15 +88,26 @@ class Page_1(tk.Frame):
     def __init__(self,parent,container):
         super().__init__(container)
         self.config(width=500, height=350)
-        self.grid_size = (3,4)
+        self.grid_propagate(False)
+        self.rowconfigure(5, weight=1)
         
+        self.parent = parent
+         
         self.error_container = {"height":'',"width":'',"length":''}
         self.base_rates = parent.base_rates
+
         self.temp_dimensions = parent.temp_dimensions
+        self.name = parent.customer_details['first name']
         
-        page_title = tk.Label(self, text="Please enter the package dimesions and region", font=("Helvetica", 14))
-        page_title.configure(background='#FFFFFF',width=45,height=3,relief='raised',borderwidth=2)
-        page_title.grid(row=0, column=0, columnspan=4, sticky="w")
+        title_frame = tk.Frame(self,width=500,height=70,background='#FFFFFF',relief='raised',borderwidth=2)
+        title_frame.grid_propagate(0)
+        title_frame.grid(row=0, column=0, columnspan=4, sticky="w")
+        
+        self.Page_greet = ttk.Label(title_frame, text='Hi,', font=("Helvetica", 12),justify='left',background='#FFFFFF')
+        self.Page_greet.config(text=parent.customer_details['first name'])
+        self.Page_greet.grid(row=0, column=0, columnspan=1, sticky="w",padx=15,pady=2.5)
+        page_title = tk.Label(title_frame, text="Please enter the package dimensions and region:", font=("Helvetica", 14),background='#FFFFFF',justify='left')
+        page_title.grid(row=1, column=0,padx=15,pady=2.5)
         
         self.final_price = parent.final_price
         
@@ -144,12 +161,14 @@ class Page_1(tk.Frame):
         navigation_grid.grid(row=5,column=2,sticky='se')
         
         self.next_button = ttk.Button(navigation_grid,text="Next",command=lambda:parent.switch_frame(Page_2),state='disabled')
-        self.next_button.grid(row=2,column=3,padx=2, pady=5,sticky='se')
+        self.next_button.grid(row=0,column=1,padx=2, pady=5,sticky='se')
         
         back_button = ttk.Button(navigation_grid,text="Back",command=lambda:parent.switch_frame(Start_Page))
-        back_button.grid(row=1,column=3,padx=2, pady=5,sticky='se')
+        back_button.grid(row=0,column=0,padx=2, pady=5,sticky='se')
 
+        self.bind('<Expose>',lambda x:self.Page_greet.config(text=f"Hi, {parent.customer_details['first name']}"))
     def callback(self,value,reason,name):
+        parent = self.parent
         try:
             value = float(value)
             if reason == 'focusout':
@@ -190,51 +209,62 @@ class Page_1(tk.Frame):
 class Page_2(tk.Frame):
     def __init__(self,parent,container):
         super().__init__(container)
-        page_title = tk.Label(self, text="Please enter your details:", font=("Helvetica", 14))
-        page_title.configure(background='#FFFFFF',width=45,height=3,relief='raised',borderwidth=2)
-        page_title.grid(row=0, column=0, columnspan=4, sticky="w")
+        title_frame = tk.Frame(self,width=500,height=70,background='#FFFFFF',relief='raised',borderwidth=2)
+        title_frame.grid_propagate(0)
+        title_frame.grid(row=0, column=0, columnspan=4, sticky="w")
+        
+        self.Page_greet = ttk.Label(title_frame, text='Hi,', font=("Helvetica", 12),justify='left',background='#FFFFFF')
+        self.Page_greet.config(text=parent.customer_details['first name'])
+        self.Page_greet.grid(row=0, column=0, columnspan=1, sticky="w",padx=15,pady=2.5)
+        page_title = tk.Label(title_frame, text="Please enter your details:", font=("Helvetica", 14),background='#FFFFFF',justify='left')
+        page_title.grid(row=1, column=0,padx=15,pady=2.5)
         
         self.customer_details = parent.customer_details
+        reg = self.register(self.callback)
+        entries=[]
         for i,fields, in enumerate(self.customer_details):
-            labs = ttk.Label(self,text=fields)
+            labs = ttk.Label(self,text=fields.title())
             ents = ttk.Entry(self)
-            ents.config(validate="key",textvariable=self.customer_details[fields])
+            ents.config(validate="key", validatecommand=(reg, '%P',fields))
             labs.grid(row=i+1,column=0,padx=5,pady=5,sticky='w')
             ents.grid(row=i+1,column=1,padx=5,pady=5,sticky='w')
-            self.customer_details[fields] = ents
+            entries.append(ents)
             
-        next_button = ttk.Button(self,text="Next",command=lambda:self.confirm_next(parent))
+        next_button = ttk.Button(self,text="Next",command=lambda:parent.switch_frame(Page_3))
         next_button.grid(row=1,column=3,padx=5, pady=5,sticky='e')
         back_button = ttk.Button(self,text="back",command=lambda:parent.switch_frame(Page_1))
         back_button.grid(row=2,column=3,padx=5, pady=5,sticky='e')
-
-    def confirm_next(self,parent):
-        values = [self.customer_details['first name'].get(),self.customer_details['last name'].get(),self.customer_details['address'].get(),self.customer_details['phone'].get()]
-        if all(values) == False:
-            messagebox.showerror('Empty Fields', 'Please Fill all fields')
-        else:
-            Page_3.update_listbox(Page_3)
-            parent.switch_frame(Page_3)
-
+        self.bind('<Expose>',lambda x:self.Page_greet.config(text=f"Hi, {parent.customer_details['first name']}"))
+        self.bind('<Expose>',lambda x:entries[0].insert(0,parent.customer_details['first name']))
+    def callback(self,value,name):
+        self.customer_details[name] = value
+        return True
+        
 class Page_3(tk.Frame):
     def __init__(self,parent,container):
         super().__init__(container)
-        page_title = tk.Label(self, text="Details:", font=("Helvetica", 14))
-        page_title.configure(background='#FFFFFF',width=45,height=3,relief='raised',borderwidth=2)
-        page_title.grid(row=0, column=0, columnspan=4, sticky="w")
+        title_frame = tk.Frame(self,width=500,height=70,background='#FFFFFF',relief='raised',borderwidth=2)
+        title_frame.grid_propagate(0)
+        title_frame.grid(row=0, column=0, columnspan=4, sticky="w")
         
-        Page_3.customer_details = parent.customer_details
+        self.Page_greet = ttk.Label(title_frame, text='Hi,', font=("Helvetica", 12),justify='left',background='#FFFFFF')
+        self.Page_greet.config(text=parent.customer_details['first name'])
+        self.Page_greet.grid(row=0, column=0, columnspan=1, sticky="w",padx=15,pady=2.5)
+        page_title = tk.Label(title_frame, text="Here are the return details:", font=("Helvetica", 14),background='#FFFFFF',justify='left')
+        page_title.grid(row=1, column=0,padx=15,pady=2.5)
         
-        Page_3.detail_box = tk.Listbox(self,height=10,width=50)
-        Page_3.detail_box.grid(row=1,column=0,columnspan=4,padx=5,pady=5,sticky='w') 
+        self.customer_details = parent.customer_details
+        
+        text_frame = tk.Frame(self,width=490,height=200)
+        text_frame.grid(row=2, column=0, columnspan=4, sticky="w")
+        text_frame.grid_propagate(0)
+        self.text = tk.Text(text_frame,width=400,height=40,relief='raised',borderwidth=2)
+        self.text.grid(row=0,column=0,columnspan=4,rowspan=3,padx=5,pady=5,sticky='w')
+        self.text.config(state='disabled')
         
         back_button = ttk.Button(self,text="back",command=lambda:parent.switch_frame(Page_2))
-        back_button.grid(row=2,column=3,padx=5, pady=5,sticky='e')
-        
-    def update_listbox(self):
-        for i,detail in enumerate(self.customer_details):
-            self.detail_box.insert(i,f'{detail}: {self.customer_details[detail].get().title()}')
-        self.detail_box.insert(i+1,f'{App.final_price}$')
+        back_button.grid(row=3,column=3,padx=5, pady=5,sticky='e')
+        self.bind('<Expose>',lambda x:self.Page_greet.config(text=f"Hi, {parent.customer_details['first name']}"))
     
 def main():
     app = App()
