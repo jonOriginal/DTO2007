@@ -8,9 +8,9 @@ from ast import Lambda
 from sqlite3 import paramstyle
 import tkinter as tk
 
-from tkinter import X, ttk
+from tkinter import END, X, ttk
 from tkinter import messagebox
-from turtle import width
+from turtle import update, width
 from wsgiref import validate
 
 class App(tk.Tk):
@@ -73,7 +73,7 @@ class Start_Page(tk.Frame):
         self.name_entry.grid(row=2, column=1, sticky="sw",padx=10,pady=10)
         
         self.next_button = ttk.Button(self,text='Next',command=lambda:parent.switch_frame(Page_1),state='disabled')
-        self.next_button.grid(column=3,row=2,padx=5,pady=5,sticky='se')
+        self.next_button.grid(column=3,row=2,padx=6,pady=5,sticky='se')
         
         self.name_entry.bind('<Return>', lambda event: self.next_button.invoke())
         
@@ -140,8 +140,8 @@ class Page_1(tk.Frame):
             self.entries[fields] = self.ents
         
         for i,fields, in enumerate(self.error_container):
-            self.error_container[fields] = ttk.Label(dimension_title,text='',foreground='red')
-            self.error_container[fields].grid(row=5,column=0,sticky='w',padx=5, pady=5,columnspan=2)
+            self.error_container[fields] = ttk.Label(dimension_title,text='',foreground='red',justify='center')
+            self.error_container[fields].grid(row=5,column=0,sticky='',padx=5, pady=5,columnspan=2)
         
         dropbox_title = ttk.Labelframe(self,text='Region')
         dropbox_title.grid(row=1,column=2,sticky='new',padx=2.5,pady=5,rowspan=2)
@@ -198,7 +198,7 @@ class Page_1(tk.Frame):
             volume = self.temp_dimensions['height']*self.temp_dimensions['width']*self.temp_dimensions['length']
             for i,vol in enumerate(self.base_rates):
                 if volume > vol:
-                    self.final_price = self.base_rates[vol]*multiplier
+                    self.parent.final_price = self.base_rates[vol]*multiplier
                     self.price_number.config(text=f'${self.final_price:.2f}')
         except:
             self.price_number.config(text='$0.00')
@@ -225,8 +225,8 @@ class Page_2(tk.Frame):
         self.Page_greet.config(text=parent.customer_details['first name'])
         self.Page_greet.grid(row=0, column=0, columnspan=1, sticky="w",padx=15,pady=2.5)
         page_title = tk.Label(title_frame, text="Please enter your details:", font=("Helvetica", 14),background='#FFFFFF',justify='left')
-        page_title.grid(row=1, column=0,padx=10,pady=2.5)
-        
+        page_title.grid(row=1, column=0,padx=15,pady=2.5)
+        self.parent = parent
         self.customer_details = parent.customer_details
         reg = self.register(self.callback)
         
@@ -236,47 +236,65 @@ class Page_2(tk.Frame):
         detail_label = ttk.Label(detail_frame,text='These details will be used by the courier')
         detail_label.grid(row=0,column=0,padx=5,pady=2.5,sticky='w',columnspan=2)
         
-        entries=[]
+        self.entries=[]
         for i,fields, in enumerate(self.customer_details):
             labs = ttk.Label(detail_frame,text=fields.title())
             ents = ttk.Entry(detail_frame)
             ents.config(validate="key", validatecommand=(reg, '%P',fields))
             labs.grid(row=i+1,column=0,padx=2.5,pady=2.5,sticky='w')
             ents.grid(row=i+1,column=1,padx=2.5,pady=2.5,sticky='w')
-            entries.append(ents)
+            self.entries.append(ents)
         
         address_frame = ttk.LabelFrame(self, text="Shipping Address")
         address_frame.grid(row=1, column=2, columnspan=2,rowspan=4, sticky="w",padx=10,pady=5)
-        
+        reg_a = self.register(self.callback_a)
         address_label = ttk.Label(address_frame,text='This is the address you are sending from')
         address_label.grid(row=0,column=0,padx=5,pady=2.5,sticky='w',columnspan=2)
         address=[]
         for i,fields, in enumerate(parent.address_details):
             labs = ttk.Label(address_frame,text=fields.title())
             ents = ttk.Entry(address_frame)
-            ents.config(validate="key", validatecommand=(reg, '%P',fields))
+            ents.config(validate="key", validatecommand=(reg_a, '%P',fields))
             labs.grid(row=i+1,column=0,padx=2.5,pady=2.5,sticky='w')
             ents.grid(row=i+1,column=1,padx=2.5,pady=2.5,sticky='w')
             address.append(ents)
         
-        
         navigation_grid=ttk.Frame(self)
-        navigation_grid.grid(row=7,column=3,sticky='se')
+        navigation_grid.grid(row=7,column=3,sticky='se',padx=4)
         
-        next_button = ttk.Button(navigation_grid,text="Next",command=lambda:parent.switch_frame(Page_3))
-        next_button.grid(row=0,column=1,padx=5, pady=5,sticky='e')
+        self.next_button = ttk.Button(navigation_grid,text="Next",command=lambda:parent.switch_frame(Page_3))
+        self.next_button.grid(row=0,column=1,padx=2, pady=5,sticky='se')
         back_button = ttk.Button(navigation_grid,text="Back",command=lambda:parent.switch_frame(Page_1))
-        back_button.grid(row=0,column=0,padx=5, pady=5,sticky='e')
+        back_button.grid(row=0,column=0,padx=2, pady=5,sticky='se')
         
-        self.bind('<Expose>',lambda x:self.Page_greet.config(text=f"Hi, {parent.customer_details['first name']}"))
-        self.bind('<Expose>',lambda x:entries[0].insert(0,parent.customer_details['first name']))
+        self.bind('<Expose>',lambda x:self.update_widgets())
     def callback(self,value,name):
-        self.customer_details[name] = value
+        if value != '':
+            self.customer_details[name] = value
+        self.confirm_next()
         return True
+    
+    def callback_a(self,value,name):
+        self.parent.address_details[name] = value
+        self.confirm_next()
+        return True
+    
+    def confirm_next(self):
+        values = [self.customer_details['first name'],self.customer_details['last name'],self.customer_details['phone'],self.parent.address_details['address'],self.parent.address_details['city'],self.parent.address_details['postcode']]
+        if all(values) == True:
+            self.next_button.config(state='normal')
+        else:
+            self.next_button.config(state='disabled')
+    
+    def update_widgets(self):
+        self.Page_greet.config(text=f"Hi, {self.customer_details['first name']}")
+        self.entries[0].delete(0,END)
+        self.entries[0].insert(0,self.parent.customer_details['first name'])
         
 class Page_3(tk.Frame):
     def __init__(self,parent,container):
         super().__init__(container)
+        self.parent = parent
         title_frame = tk.Frame(self,width=500,height=70,background='#FFFFFF',relief='raised',borderwidth=2)
         title_frame.grid_propagate(0)
         title_frame.grid(row=0, column=0, columnspan=4, sticky="w")
@@ -297,9 +315,20 @@ class Page_3(tk.Frame):
         self.text.config(state='disabled')
         
         back_button = ttk.Button(self,text="back",command=lambda:parent.switch_frame(Page_2))
-        back_button.grid(row=3,column=3,padx=5, pady=5,sticky='e')
-        self.bind('<Expose>',lambda x:self.Page_greet.config(text=f"Hi, {parent.customer_details['first name']}"))
-    
+        back_button.grid(row=3,column=3,padx=2.5, pady=5,sticky='e')
+        self.bind('<Expose>',lambda x:self.update_widgets())
+        
+    def update_widgets(self):
+        self.Page_greet.config(text=f"Hi, {self.parent.customer_details['first name']}")
+        self.text.config(state='normal')
+        self.text.delete(1.0,'end')
+        for i,field in enumerate(self.parent.customer_details):
+            self.text.insert(tk.END,f"{field.title()}: {self.parent.customer_details[field]}\n")
+        for i,field in enumerate(self.parent.address_details):
+            self.text.insert(tk.END,f"{field.title()}: {self.parent.address_details[field]}\n")
+        self.text.insert(tk.END,f"Price: ${self.parent.final_price:.2f}")
+        self.text.config(state='disabled')
+
 def main():
     app = App()
     app.mainloop()
