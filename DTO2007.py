@@ -4,14 +4,33 @@ DTO2007Y2A V1
 5/07/22
 """
 
-from ast import Lambda
-from sqlite3 import paramstyle
 import tkinter as tk
 
 from tkinter import END, X, ttk
 from tkinter import messagebox
-from turtle import update, width
-from wsgiref import validate
+
+class Details(dict):
+    def __getitem__(self, key):
+        return dict.__getitem__(self, key)
+    def __setitem__(self, key, value):
+        dict.__setitem__(self, key, value)
+    def __delitem__(self, key):
+        dict.__setitem__(self, key, '')
+    
+class Access():
+    def __init__(self):
+        self.address = Details({'address':'','city':'','postcode':''})
+        self.dimensions = Details({"height":'',"width":'',"length":''})
+        self.customer = Details({'first name':'','last name':'','phone':''})
+
+class Builder():
+    def header(self, master,title):
+        frame = tk.Frame(master,width=500,height=70,background='#FFFFFF',relief='raised',borderwidth=2)
+        frame.grid(row=0, column=0, sticky='ew')
+        
+        title = ttk.Label(frame, text=title, font=("Helvetica", 18), background='#FFFFFF')
+        title.grid(row=0, column=0, sticky='ew')
+        
 
 class App(tk.Tk):
     def __init__(self, *args, **kwargs):
@@ -22,16 +41,12 @@ class App(tk.Tk):
         mainframe = ttk.Frame(self)
         mainframe.pack(side="top", fill="none", expand=False)
         self.final_price = 0
-        
-        self.temp_dimensions = {"height":'',"width":'',"length":''}
+
         
         self.region_multiplier= {'North island':1,'South island':1.5,'Stewart island':2}
         self.region_var=tk.DoubleVar()
-        
         self.base_rates = {0:8.00,6000:12.00,100000:15.00}
         
-        self.customer_details = {'first name':'','last name':'','phone':''}
-        self.address_details = {'address':'','city':'','postcode':''}
         self.frame_list = {Start_Page:'',Page_1:'',Page_2:'',Page_3:''}
         for i, frame_name in enumerate(self.frame_list):
             frame = frame_name(self,mainframe)
@@ -55,6 +70,8 @@ class Start_Page(tk.Frame):
         
         info_text="Welcome to the Onlinz Shopping returns application.\n\nIf your product is returned undamaged within 30 days, you will receive\na full refund of the purchase price.\n\nThis program will help you calculate the courier cost and collect \ninformation needed to return the product."
         
+        b = Builder()
+        b.header(self,'welcome')
         title_frame = tk.Frame(self,width=500,height=70,background='#FFFFFF',relief='raised',borderwidth=2)
         title_frame.grid_propagate(0)
         title_frame.grid(row=0, column=0, columnspan=4, sticky="w")
@@ -78,13 +95,13 @@ class Start_Page(tk.Frame):
         self.name_entry.bind('<Return>', lambda event: self.next_button.invoke())
         
     def callback(self,value):
-        parent = self.parent
+        a = Access()
         if value:
-            parent.customer_details['first name'] = value
+            a.customer['first name'] = value.title()
             self.next_button.configure(state='normal')
             return True  
         if value == '':
-            parent.customer_details['first name'] = ''
+            del a.customer['first name']
             self.next_button.configure(state='disabled')
             return True
 
@@ -96,12 +113,9 @@ class Page_1(tk.Frame):
         self.rowconfigure(5, weight=1)
         
         self.parent = parent
-         
-        self.error_container = {"height":'',"width":'',"length":''}
         self.base_rates = parent.base_rates
-
-        self.temp_dimensions = parent.temp_dimensions
-        self.name = parent.customer_details['first name']
+        
+        self.a = Access()
         
         title_frame = tk.Frame(self,width=500,height=70,background='#FFFFFF',relief='raised',borderwidth=2)
         title_frame.grid_propagate(0)
@@ -114,7 +128,6 @@ class Page_1(tk.Frame):
         page_title.grid(row=1, column=0,padx=15,pady=2.5)
         
         self.final_price = parent.final_price
-        
         self.region_multiplier = parent.region_multiplier
         self.region_var=parent.region_var
         
@@ -128,7 +141,7 @@ class Page_1(tk.Frame):
         dimensions_label.grid(row=0, column=0, columnspan=2, sticky="w",padx=2.5,pady=5)
         
         self.entries = {"height":'',"width":'',"length":''}
-        for i,fields, in enumerate(self.temp_dimensions):
+        for i,fields, in enumerate(self.a.dimensions):
             labs = ttk.Label(dimension_title,text=fields.title())
             self.ents = ttk.Entry(dimension_title)
 
@@ -173,7 +186,6 @@ class Page_1(tk.Frame):
         self.bind('<Expose>',lambda x:self.Page_greet.config(text=f"Hi, {parent.customer_details['first name']}"))
         self.dropbox.bind('<Return>', lambda event: self.next_button.invoke())
     def callback(self,value,reason,name):
-        parent = self.parent
         try:
             value = float(value)
             if reason == 'focusout':
@@ -181,7 +193,7 @@ class Page_1(tk.Frame):
                     self.error_container[name].config(text='Please enter a value between 5 and 100')
                 else:
                     self.error_container[name].config(text='')
-            self.temp_dimensions[name] = value
+            Access.dimensions[name] = value
             self.confirm_next()
             return True
         except:
@@ -199,7 +211,7 @@ class Page_1(tk.Frame):
             for i,vol in enumerate(self.base_rates):
                 if volume > vol:
                     self.parent.final_price = self.base_rates[vol]*multiplier
-                    self.price_number.config(text=f'${self.final_price:.2f}')
+                    self.price_number.config(text=f'${self.parent.final_price:.2f}')
         except:
             self.price_number.config(text='$0.00')
 
@@ -270,12 +282,12 @@ class Page_2(tk.Frame):
         self.bind('<Expose>',lambda x:self.update_widgets())
     def callback(self,value,name):
         if value != '':
-            self.customer_details[name] = value
+            self.customer_details[name] = value.title()
         self.confirm_next()
         return True
     
     def callback_a(self,value,name):
-        self.parent.address_details[name] = value
+        self.parent.address_details[name] = value.title()
         self.confirm_next()
         return True
     
@@ -294,6 +306,8 @@ class Page_2(tk.Frame):
 class Page_3(tk.Frame):
     def __init__(self,parent,container):
         super().__init__(container)
+        self.grid_propagate(0)
+        self.rowconfigure(3, weight=1)
         self.parent = parent
         title_frame = tk.Frame(self,width=500,height=70,background='#FFFFFF',relief='raised',borderwidth=2)
         title_frame.grid_propagate(0)
@@ -310,12 +324,18 @@ class Page_3(tk.Frame):
         text_frame = tk.Frame(self,width=490,height=200)
         text_frame.grid(row=2, column=0, columnspan=4, sticky="w")
         text_frame.grid_propagate(0)
-        self.text = tk.Text(text_frame,width=400,height=40,relief='raised',borderwidth=2)
-        self.text.grid(row=0,column=0,columnspan=4,rowspan=3,padx=5,pady=5,sticky='w')
+        self.text = tk.Text(text_frame,width=400,height=40,relief='raised',borderwidth=2,font=("Arial",10))
+        self.text.grid(row=0,column=0,columnspan=4,rowspan=3,padx=10,pady=10,sticky='w')
         self.text.config(state='disabled')
         
-        back_button = ttk.Button(self,text="back",command=lambda:parent.switch_frame(Page_2))
-        back_button.grid(row=3,column=3,padx=2.5, pady=5,sticky='e')
+        navigation_grid=ttk.Frame(self)
+        navigation_grid.grid(row=7,column=3,sticky='se',padx=4)
+        
+        back_button = ttk.Button(navigation_grid,text="Back",command=lambda:parent.switch_frame(Page_2))
+        back_button.grid(row=3,column=0,padx=2, pady=5,sticky='se')
+        
+        finish_button = ttk.Button(navigation_grid,text="Finish",command=lambda:exit())
+        finish_button.grid(row=3,column=1,padx=2, pady=5,sticky='se')
         self.bind('<Expose>',lambda x:self.update_widgets())
         
     def update_widgets(self):
@@ -330,6 +350,8 @@ class Page_3(tk.Frame):
         self.text.config(state='disabled')
 
 def main():
+    global a
+    a = Access()
     app = App()
     app.mainloop()
     
