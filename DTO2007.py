@@ -8,14 +8,13 @@ import tkinter as tk
 
 from tkinter import END, X, ttk
 from tkinter import messagebox
-from tracemalloc import start
 
 class Details(dict):
-    def __getitem__(self, key):
+    def __getitem__(self, key) -> str:
         return dict.__getitem__(self, key)
-    def __setitem__(self, key, value):
+    def __setitem__(self, key, value) -> None:
         dict.__setitem__(self, key, value)
-    def __delitem__(self, key):
+    def __delitem__(self, key) -> None:
         dict.__setitem__(self, key, '')
     
 class Access():
@@ -23,9 +22,13 @@ class Access():
         self.address = Details({'address':'','city':'','postcode':''})
         self.dimensions = Details({"height":'',"width":'',"length":''})
         self.customer = Details({'first name':'','last name':'','phone':''})
-
+        self.region_multiplier= {'North island':1,'South island':1.5,'Stewart island':2}
+        self.rates = {0:8.00,6000:12.00,100000:15.00}
+        self.price = 0
+        
 class Builder():
-    def header(self, master,title,greet=True):
+    @staticmethod
+    def header(master,title,greet=True) -> tk.Label:
         frame = tk.Frame(master,width=500,height=70,background='#FFFFFF',relief='raised',borderwidth=2)
         frame.grid(row=0, column=0, sticky='ew',columnspan=4)
         frame.grid_propagate(0)
@@ -41,8 +44,8 @@ class Builder():
         
         else:
             return frame
-    
-    def nav(self,master,parent,current,back=True,next=True,finish=False):
+    @staticmethod
+    def nav(master,parent,current,back=True,next=True,finish=False) -> tk.Button:
         
         frame = tk.Frame(master)
         frame.grid(row=6, column=3, sticky='se',columnspan=2)
@@ -55,12 +58,34 @@ class Builder():
             next_button.grid(row=0, column=1, sticky='se', pady=5, padx=2.5)
         if back:
             back_button.grid(row=0, column=0, sticky='se', pady=5, padx=2.5)
-        
         if finish:
             finish_button.grid(row=0, column=1, sticky='se', pady=5, padx=2.5)
         
         return next_button
     
+    @staticmethod
+    def entry(master,Label,row,column,validatecommand,validate = 'key',width=15) -> tk.Entry:
+        frame = tk.Frame(master)
+        frame.grid(row=row, column=column, sticky='ew',columnspan=1)
+        label = ttk.Label(frame, text=Label,width=width)
+        label.grid(row=0, column=0, sticky='w', pady=5, padx=5)
+        entry = ttk.Entry(frame,validate=validate,validatecommand=validatecommand)
+        entry.grid(row=0, column=1, sticky='w', pady=5, padx=5)
+        return entry
+    
+    @staticmethod
+    def lframe(master,lable,text,row,column,columnspan=2,rowspan=4) -> tk.LabelFrame:
+        frame = ttk.LabelFrame(master,text=lable)
+        frame.grid(row=row, column=column, sticky='ew',columnspan=columnspan,padx=5,pady=5,rowspan=rowspan)
+        label = ttk.Label(frame, text=text)
+        label.grid(row=0, column=0, sticky='w', pady=5, padx=5)
+        return frame
+    
+    @staticmethod
+    def label(master,text,row,column,font=(),columnspan=1,rowspan=1,foreground='black',justify = 'left',sticky = 'ew') -> tk.Label:
+        label = ttk.Label(master,text=text,font=font,foreground=foreground,justify=justify)
+        label.grid(row=row, column=column, sticky=sticky,columnspan=columnspan,padx=5,pady=5,rowspan=rowspan)
+        return label
 class App(tk.Tk):
     def __init__(self, *args, **kwargs):
         super().__init__( *args, **kwargs)
@@ -69,18 +94,14 @@ class App(tk.Tk):
         self.resizable(False, False)
         mainframe = ttk.Frame(self)
         mainframe.pack(side="top", fill="none", expand=False)
-        self.final_price = 0
-        
-        
-        self.region_multiplier= {'North island':1,'South island':1.5,'Stewart island':2}
-        self.region_var=tk.DoubleVar()
-        self.base_rates = {0:8.00,6000:12.00,100000:15.00}
         
         self.frame_list = {Start_Page:'',Page_1:'',Page_2:'',Page_3:''}
         for i, frame_name in enumerate(self.frame_list):
             frame = frame_name(self,mainframe)
+            frame.config(width=500,height=350)
             self.frame_list[frame_name] = frame
-            frame.grid(row=0, column=0, sticky="nsew",)
+            frame.grid(row=0, column=0, sticky="nsew")
+            frame.grid_propagate(False)
     
         self.frame_list[Start_Page].tkraise()
     
@@ -97,27 +118,18 @@ class App(tk.Tk):
 class Start_Page(tk.Frame):
     def __init__(self,parent,container):
         super().__init__(container)
-        self.config(width=500, height=350)
-        self.grid_propagate(False)
         self.rowconfigure(2, weight=1)
-        self.parent = parent
         reg = self.register(self.callback)
         info_text="Welcome to the Onlinz Shopping returns application.\n\nIf your product is returned undamaged within 30 days, you will receive\na full refund of the purchase price.\n\nThis program will help you calculate the courier cost and collect \ninformation needed to return the product."
         
         self.page_greet = b.header(self,'Onlinz Shopping returns',False)
 
-        main_label = tk.Label(self, justify='left',text=info_text, font=("Helvetica", 12))
-        main_label.grid(row=1, column=0, columnspan=4, sticky="w",padx=10,pady=10)     
+        b.label(self,info_text,1,0,font=('Arial', 12),justify='left',columnspan=4) 
         
-        name_label = ttk.Label(self, text="First Name:")
-        name_label.grid(row=6, column=0, sticky="ws",padx=10,pady=10)
-        
-        self.name_entry = ttk.Entry(self,validate='key', validatecommand=(reg,'%P'))
-        self.name_entry.grid(row=6, column=1, sticky="sw",padx=10,pady=10)
-        
+        name_entry = b.entry(self,'First Name:',6,0,validatecommand=(reg,'%P'))
+        name_entry.focus()
         self.next_button = b.nav(self,parent,__class__,back=False)
-        
-        self.name_entry.bind('<Return>', lambda event: self.next_button.invoke())
+        name_entry.bind('<Return>', lambda event: self.next_button.invoke())
         
     def callback(self,value):
         if value:
@@ -132,66 +144,34 @@ class Start_Page(tk.Frame):
 class Page_1(tk.Frame):
     def __init__(self,parent,container):
         super().__init__(container)
-        self.config(width=500, height=350)
-        self.grid_propagate(False)
         self.rowconfigure(5, weight=1)
-        
-        self.parent = parent
-        self.base_rates = parent.base_rates
         
         self.page_greet = b.header(self,'Please enter the package dimensions and region:')
         
-        self.final_price = parent.final_price
-        self.region_multiplier = parent.region_multiplier
-        self.region_var=parent.region_var
+        reg = self.register(self.callback)
         
-        reg=self.register(self.callback)
-
-        
-        dimension_title = ttk.LabelFrame(self, text="Measurements")
-        dimension_title.grid(row=1, column=0, columnspan=2,rowspan=4, sticky="w",padx=10,pady=5)
-        
-        dimensions_label = ttk.Label(dimension_title, text="Enter the dimensions of the package in cm:")
-        dimensions_label.grid(row=0, column=0, columnspan=2, sticky="w",padx=2.5,pady=5)
+        measurements = b.lframe(self,'Measurements','Enter the dimensions of the package in cm:',1,0)
         
         self.entries = {"height":'',"width":'',"length":''}
         for i,fields, in enumerate(a.dimensions):
-            labs = ttk.Label(dimension_title,text=fields.title())
-            self.ents = ttk.Entry(dimension_title)
-
-            self.ents.config(validate='all', validatecommand=(reg, '%P','%V',fields))
-
-            labs.grid(row=i+1,column=0,sticky='w',padx=5, pady=5)
-            self.ents.grid(row=i+1,column=1,padx=5, pady=5)
-
-            self.entries[fields] = self.ents
+            ents = b.entry(measurements,fields.title(),i+1,0,validate='all',validatecommand=(reg, '%P','%V',fields),width=14)
+            self.entries[fields] = ents
         
         self.error_container = {'width':'','height':'','length':''}
-        
         for i,fields, in enumerate(self.error_container):
-            self.error_container[fields] = ttk.Label(dimension_title,text='',foreground='red',justify='center')
-            self.error_container[fields].grid(row=5,column=0,sticky='',padx=5, pady=5,columnspan=2)
-        
-        dropbox_title = ttk.Labelframe(self,text='Region')
-        dropbox_title.grid(row=1,column=2,sticky='new',padx=2.5,pady=5,rowspan=2,columnspan=2)
-        dropbox_label = ttk.Label(dropbox_title,text='Select the region you are sending from:')
-        dropbox_label.grid(row=0,column=0,sticky='w',padx=5,pady=5)
+            self.error_container[fields] = b.label(measurements,'',4,0,justify='center',columnspan=2,foreground='red',sticky=None)
+            
+        region = b.lframe(self,'Region','Select the region you are sending from:',1,2,rowspan=2)
     
-        self.dropbox = ttk.Combobox(dropbox_title,values=list(self.region_multiplier.keys()),state='readonly')
+        self.dropbox = ttk.Combobox(region,values=list(a.region_multiplier.keys()),state='readonly')
         self.dropbox.grid(row=1,column=0,sticky='ew',padx=15,pady=5)
-        self.dropbox.bind('<<ComboboxSelected>>',self.confirm_next)
         
-        price_title=ttk.LabelFrame(self,text='Price')
-        price_title.grid(row=3,column=2,sticky='new',padx=2.5,pady=5,rowspan=2,columnspan=2)
-        
-        price_label = ttk.Label(price_title,text='The price to return the package is:')
-        price_label.grid(row=0,column=0,sticky='w',padx=5,pady=5)
-        
-        self.price_number = ttk.Label(price_title,text='$0.00',justify='center',font=('arial',11,'bold'))
-        self.price_number.grid(row=1,column=0,padx=5,pady=5,rowspan=2)
+        estimate = b.lframe(self,'Price','The shipping cost to return the product:',3,2,rowspan=2)
+        self.price_number = b.label(estimate,'',1,0,justify='center',columnspan=2,font=('Arial', 11, 'bold'),rowspan=2,sticky=None)
         
         self.next_button = b.nav(self,parent,__class__)
-
+        
+        self.dropbox.bind('<<ComboboxSelected>>',self.confirm_next)
         self.bind('<Expose>',lambda x:self.page_greet.config(text=f"Hi, {a.customer['first name']}"))
         self.dropbox.bind('<Return>', lambda event: self.next_button.invoke())
     def callback(self,value,reason,name):
@@ -215,12 +195,12 @@ class Page_1(tk.Frame):
 
     def update_price(self):
         try:
-            multiplier=self.region_multiplier[self.dropbox.get()]
-            volume = self.temp_dimensions['height']*self.temp_dimensions['width']*self.temp_dimensions['length']
-            for i,vol in enumerate(self.base_rates):
+            multiplier=a.region_multiplier[self.dropbox.get()]
+            volume = a.dimensions['height']*a.dimensions['width']*a.dimensions['length']
+            for i,vol in enumerate(a.rates):
                 if volume > vol:
-                    self.parent.final_price = self.base_rates[vol]*multiplier
-                    self.price_number.config(text=f'${self.parent.final_price:.2f}')
+                    a.price = a.rates[vol]*multiplier
+                    self.price_number.config(text=f'${a.price:.2f}')
         except:
             self.price_number.config(text='$0.00')
 
@@ -235,40 +215,23 @@ class Page_1(tk.Frame):
 class Page_2(tk.Frame):
     def __init__(self,parent,container):
         super().__init__(container)
-        self.grid_propagate(0)
         self.rowconfigure(5, weight=1)
         
         self.page_greet = b.header(self,'Please enter your details:')
-        self.parent = parent
         reg = self.register(self.callback)
-        
-        detail_frame = ttk.LabelFrame(self, text="Personal Details")
-        detail_frame.grid(row=1, column=0, columnspan=2,rowspan=4, sticky="w",padx=10,pady=5)
-        
-        detail_label = ttk.Label(detail_frame,text='These details will be used by the courier')
-        detail_label.grid(row=0,column=0,padx=5,pady=2.5,sticky='w',columnspan=2)
+        reg_a = self.register(self.callback_a)
+        details = b.lframe(self,'Personal Details','These details will be used by the courier:',1,0)
         
         self.entries=[]
         for i,fields, in enumerate(a.customer):
-            labs = ttk.Label(detail_frame,text=fields.title())
-            ents = ttk.Entry(detail_frame)
-            ents.config(validate="key", validatecommand=(reg, '%P',fields))
-            labs.grid(row=i+1,column=0,padx=2.5,pady=2.5,sticky='w')
-            ents.grid(row=i+1,column=1,padx=2.5,pady=2.5,sticky='w')
+            ents = b.entry(details,fields.title(),i+1,0,validate='key',validatecommand=(reg, '%P',fields))
             self.entries.append(ents)
         
-        address_frame = ttk.LabelFrame(self, text="Shipping Address")
-        address_frame.grid(row=1, column=2, columnspan=2,rowspan=4, sticky="w",padx=10,pady=5)
-        reg_a = self.register(self.callback_a)
-        address_label = ttk.Label(address_frame,text='This is the address you are sending from')
-        address_label.grid(row=0,column=0,padx=5,pady=2.5,sticky='w',columnspan=2)
+        addresses = b.lframe(self,'Address','Enter the address you are sending from:',1,2)
+        
         address=[]
         for i,fields, in enumerate(a.address):
-            labs = ttk.Label(address_frame,text=fields.title())
-            ents = ttk.Entry(address_frame)
-            ents.config(validate="key", validatecommand=(reg_a, '%P',fields))
-            labs.grid(row=i+1,column=0,padx=2.5,pady=2.5,sticky='w')
-            ents.grid(row=i+1,column=1,padx=2.5,pady=2.5,sticky='w')
+            ents  = b.entry(addresses,fields.title(),i+1,0,validate='key',validatecommand=(reg_a, '%P',fields),width=13)
             address.append(ents)
         
         self.next_button = b.nav(self,parent,__class__)
@@ -300,18 +263,15 @@ class Page_2(tk.Frame):
 class Page_3(tk.Frame):
     def __init__(self,parent,container):
         super().__init__(container)
-        self.grid_propagate(0)
         self.rowconfigure(3, weight=1)
-        self.parent = parent
         
         self.page_greet = b.header(self,'Please confirm your details:')
         
         text_frame = tk.Frame(self,width=490,height=200)
         text_frame.grid(row=2, column=0, columnspan=4, sticky="w")
         text_frame.grid_propagate(0)
-        self.text = tk.Text(text_frame,width=400,height=40,relief='raised',borderwidth=2,font=("Arial",10))
+        self.text = tk.Text(text_frame,width=400,height=40,relief='raised',borderwidth=2,font=("Arial",10),state='disabled')
         self.text.grid(row=0,column=0,columnspan=4,rowspan=3,padx=10,pady=10,sticky='w')
-        self.text.config(state='disabled')
         
         self.next_button = b.nav(self,parent,__class__,finish=True,next=False)
         
@@ -325,7 +285,7 @@ class Page_3(tk.Frame):
             self.text.insert(tk.END,f"{field.title()}: {a.customer[field]}\n")
         for i,field in enumerate(a.address):
             self.text.insert(tk.END,f"{field.title()}: {a.address[field]}\n")
-        self.text.insert(tk.END,f"Price: ${self.parent.final_price:.2f}")
+        self.text.insert(tk.END,f"Price: ${a.price:.2f}")
         self.text.config(state='disabled')
 
 def main():
