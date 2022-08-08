@@ -273,8 +273,10 @@ class Page_3(tk.Frame):
         self.text = tk.Text(text_frame,width=400,height=40,relief='raised',borderwidth=2,font=("Arial",10),state='disabled')
         self.text.grid(row=0,column=0,columnspan=4,rowspan=3,padx=10,pady=10,sticky='w')
         
-        self.next_button = b.nav(self,parent,__class__,finish=True,next=False)
+        copy_button = ttk.Button(self,text='Copy to clipboard',command=self.copy_to_clipboard)
+        copy_button.grid(row=3,column=0,sticky='w',padx=10,pady=10)
         
+        self.next_button = b.nav(self,parent,__class__,finish=True,next=False)
         self.bind('<Expose>',lambda x:self.update_widgets())
         
     def update_widgets(self):
@@ -287,6 +289,11 @@ class Page_3(tk.Frame):
             self.text.insert(tk.END,f"{field.title()}: {a.address[field]}\n")
         self.text.insert(tk.END,f"Price: ${a.price:.2f}")
         self.text.config(state='disabled')
+    
+    def copy_to_clipboard(self):
+        self.clipboard_clear()
+        self.clipboard_append(self.text.get('1.0','end'))
+        self.update()
 
 def main():
     global a
