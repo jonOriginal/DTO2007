@@ -8,6 +8,7 @@ import tkinter as tk
 
 from tkinter import END, X, ttk
 from tkinter import messagebox
+from tracemalloc import start
 
 class Details(dict):
     def __getitem__(self, key):
@@ -29,19 +30,37 @@ class Builder():
         frame.grid(row=0, column=0, sticky='ew',columnspan=4)
         frame.grid_propagate(0)
         
-        title = ttk.Label(frame, text=title, font=("Helvetica", 18), background='#FFFFFF')
+        title = ttk.Label(frame, text=title, font=("Helvetica", 14), background='#FFFFFF')
         title.grid(row=1, column=0, sticky='ew', pady=20, padx=20)
         
         if greet == True:
-            greet = tk.Label(frame, text=a.customer['first name'], font=('Arial', 18), background='#FFFFFF')
-            greet.grid(row=0, column=0, sticky='ew')
-            title.grid(row=1, column=0, sticky='ew', pady=2.5, padx=20)
+            greet = tk.Label(frame, text=a.customer['first name'], font=('Arial', 12), background='#FFFFFF',justify='left')
+            greet.grid(row=0, column=0,sticky='w',padx=15,pady=2.5)
+            title.grid(row=1, column=0, sticky='ew', pady=2.5, padx=15)
             return greet
         
         else:
             return frame
     
-
+    def nav(self,master,parent,current,back=True,next=True,finish=False):
+        
+        frame = tk.Frame(master)
+        frame.grid(row=6, column=3, sticky='se',columnspan=2)
+        
+        next_button = ttk.Button(frame, text='Next', command=lambda: parent.next(current),state='disabled')
+        back_button = ttk.Button(frame, text='Back', command=lambda: parent.back(current))
+        finish_button = ttk.Button(frame, text='Finish', command=lambda: exit())
+        
+        if next:
+            next_button.grid(row=0, column=1, sticky='se', pady=5, padx=2.5)
+        if back:
+            back_button.grid(row=0, column=0, sticky='se', pady=5, padx=2.5)
+        
+        if finish:
+            finish_button.grid(row=0, column=1, sticky='se', pady=5, padx=2.5)
+        
+        return next_button
+    
 class App(tk.Tk):
     def __init__(self, *args, **kwargs):
         super().__init__( *args, **kwargs)
@@ -51,7 +70,7 @@ class App(tk.Tk):
         mainframe = ttk.Frame(self)
         mainframe.pack(side="top", fill="none", expand=False)
         self.final_price = 0
-
+        
         
         self.region_multiplier= {'North island':1,'South island':1.5,'Stewart island':2}
         self.region_var=tk.DoubleVar()
@@ -63,12 +82,18 @@ class App(tk.Tk):
             self.frame_list[frame_name] = frame
             frame.grid(row=0, column=0, sticky="nsew",)
     
-        self.switch_frame(Start_Page)
+        self.frame_list[Start_Page].tkraise()
+    
+    def next(self,current):
+        i = list(self.frame_list.keys()).index(current)+1
+        name = list(self.frame_list.keys())[i]
+        self.frame_list[name].tkraise()   
         
+    def back(self,current):
+        i = list(self.frame_list.keys()).index(current)-1
+        name = list(self.frame_list.keys())[i]
+        self.frame_list[name].tkraise()
         
-    def switch_frame(self, page_name):
-        self.frame_list[page_name].tkraise()
-
 class Start_Page(tk.Frame):
     def __init__(self,parent,container):
         super().__init__(container)
@@ -77,7 +102,6 @@ class Start_Page(tk.Frame):
         self.rowconfigure(2, weight=1)
         self.parent = parent
         reg = self.register(self.callback)
-        
         info_text="Welcome to the Onlinz Shopping returns application.\n\nIf your product is returned undamaged within 30 days, you will receive\na full refund of the purchase price.\n\nThis program will help you calculate the courier cost and collect \ninformation needed to return the product."
         
         self.page_greet = b.header(self,'Onlinz Shopping returns',False)
@@ -86,13 +110,12 @@ class Start_Page(tk.Frame):
         main_label.grid(row=1, column=0, columnspan=4, sticky="w",padx=10,pady=10)     
         
         name_label = ttk.Label(self, text="First Name:")
-        name_label.grid(row=2, column=0, sticky="ws",padx=10,pady=10)
+        name_label.grid(row=6, column=0, sticky="ws",padx=10,pady=10)
         
         self.name_entry = ttk.Entry(self,validate='key', validatecommand=(reg,'%P'))
-        self.name_entry.grid(row=2, column=1, sticky="sw",padx=10,pady=10)
+        self.name_entry.grid(row=6, column=1, sticky="sw",padx=10,pady=10)
         
-        self.next_button = ttk.Button(self,text='Next',command=lambda:parent.switch_frame(Page_1),state='disabled')
-        self.next_button.grid(column=3,row=2,padx=6,pady=5,sticky='se')
+        self.next_button = b.nav(self,parent,__class__,back=False)
         
         self.name_entry.bind('<Return>', lambda event: self.next_button.invoke())
         
@@ -150,7 +173,7 @@ class Page_1(tk.Frame):
             self.error_container[fields].grid(row=5,column=0,sticky='',padx=5, pady=5,columnspan=2)
         
         dropbox_title = ttk.Labelframe(self,text='Region')
-        dropbox_title.grid(row=1,column=2,sticky='new',padx=2.5,pady=5,rowspan=2)
+        dropbox_title.grid(row=1,column=2,sticky='new',padx=2.5,pady=5,rowspan=2,columnspan=2)
         dropbox_label = ttk.Label(dropbox_title,text='Select the region you are sending from:')
         dropbox_label.grid(row=0,column=0,sticky='w',padx=5,pady=5)
     
@@ -159,7 +182,7 @@ class Page_1(tk.Frame):
         self.dropbox.bind('<<ComboboxSelected>>',self.confirm_next)
         
         price_title=ttk.LabelFrame(self,text='Price')
-        price_title.grid(row=3,column=2,sticky='new',padx=2.5,pady=5,rowspan=2)
+        price_title.grid(row=3,column=2,sticky='new',padx=2.5,pady=5,rowspan=2,columnspan=2)
         
         price_label = ttk.Label(price_title,text='The price to return the package is:')
         price_label.grid(row=0,column=0,sticky='w',padx=5,pady=5)
@@ -167,14 +190,7 @@ class Page_1(tk.Frame):
         self.price_number = ttk.Label(price_title,text='$0.00',justify='center',font=('arial',11,'bold'))
         self.price_number.grid(row=1,column=0,padx=5,pady=5,rowspan=2)
         
-        navigation_grid=ttk.Frame(self)
-        navigation_grid.grid(row=5,column=2,sticky='se')
-        
-        self.next_button = ttk.Button(navigation_grid,text="Next",command=lambda:parent.switch_frame(Page_2),state='disabled')
-        self.next_button.grid(row=0,column=1,padx=2, pady=5,sticky='se')
-        
-        back_button = ttk.Button(navigation_grid,text="Back",command=lambda:parent.switch_frame(Start_Page))
-        back_button.grid(row=0,column=0,padx=2, pady=5,sticky='se')
+        self.next_button = b.nav(self,parent,__class__)
 
         self.bind('<Expose>',lambda x:self.page_greet.config(text=f"Hi, {a.customer['first name']}"))
         self.dropbox.bind('<Return>', lambda event: self.next_button.invoke())
@@ -220,17 +236,9 @@ class Page_2(tk.Frame):
     def __init__(self,parent,container):
         super().__init__(container)
         self.grid_propagate(0)
-        self.rowconfigure(7, weight=1)
+        self.rowconfigure(5, weight=1)
         
-        title_frame = tk.Frame(self,width=500,height=70,background='#FFFFFF',relief='raised',borderwidth=2)
-        title_frame.grid_propagate(0)
-        title_frame.grid(row=0, column=0, columnspan=4, sticky="w")
-        
-        self.Page_greet = ttk.Label(title_frame, text='Hi,', font=("Helvetica", 12),justify='left',background='#FFFFFF')
-        self.Page_greet.config(text=a.customer['first name'])
-        self.Page_greet.grid(row=0, column=0, columnspan=1, sticky="w",padx=15,pady=2.5)
-        page_title = tk.Label(title_frame, text="Please enter your details:", font=("Helvetica", 14),background='#FFFFFF',justify='left')
-        page_title.grid(row=1, column=0,padx=15,pady=2.5)
+        self.page_greet = b.header(self,'Please enter your details:')
         self.parent = parent
         reg = self.register(self.callback)
         
@@ -263,13 +271,7 @@ class Page_2(tk.Frame):
             ents.grid(row=i+1,column=1,padx=2.5,pady=2.5,sticky='w')
             address.append(ents)
         
-        navigation_grid=ttk.Frame(self)
-        navigation_grid.grid(row=7,column=3,sticky='se',padx=4)
-        
-        self.next_button = ttk.Button(navigation_grid,text="Next",command=lambda:parent.switch_frame(Page_3))
-        self.next_button.grid(row=0,column=1,padx=2, pady=5,sticky='se')
-        back_button = ttk.Button(navigation_grid,text="Back",command=lambda:parent.switch_frame(Page_1))
-        back_button.grid(row=0,column=0,padx=2, pady=5,sticky='se')
+        self.next_button = b.nav(self,parent,__class__)
         
         self.bind('<Expose>',lambda x:self.update_widgets())
     def callback(self,value,name):
@@ -291,7 +293,7 @@ class Page_2(tk.Frame):
             self.next_button.config(state='disabled')
     
     def update_widgets(self):
-        self.Page_greet.config(text=f"Hi, {a.customer['first name']}")
+        self.page_greet.config(text=f"Hi, {a.customer['first name']}")
         self.entries[0].delete(0,END)
         self.entries[0].insert(0,a.customer['first name'])
         
@@ -301,16 +303,8 @@ class Page_3(tk.Frame):
         self.grid_propagate(0)
         self.rowconfigure(3, weight=1)
         self.parent = parent
-        title_frame = tk.Frame(self,width=500,height=70,background='#FFFFFF',relief='raised',borderwidth=2)
-        title_frame.grid_propagate(0)
-        title_frame.grid(row=0, column=0, columnspan=4, sticky="w")
         
-        self.Page_greet = ttk.Label(title_frame, text='Hi,', font=("Helvetica", 12),justify='left',background='#FFFFFF')
-        self.Page_greet.config(text=a.customer['first name'])
-        self.Page_greet.grid(row=0, column=0, columnspan=1, sticky="w",padx=15,pady=2.5)
-        page_title = tk.Label(title_frame, text="Here are the return details:", font=("Helvetica", 14),background='#FFFFFF',justify='left')
-        page_title.grid(row=1, column=0,padx=15,pady=2.5)
-        
+        self.page_greet = b.header(self,'Please confirm your details:')
         
         text_frame = tk.Frame(self,width=490,height=200)
         text_frame.grid(row=2, column=0, columnspan=4, sticky="w")
@@ -319,18 +313,12 @@ class Page_3(tk.Frame):
         self.text.grid(row=0,column=0,columnspan=4,rowspan=3,padx=10,pady=10,sticky='w')
         self.text.config(state='disabled')
         
-        navigation_grid=ttk.Frame(self)
-        navigation_grid.grid(row=7,column=3,sticky='se',padx=4)
+        self.next_button = b.nav(self,parent,__class__,finish=True,next=False)
         
-        back_button = ttk.Button(navigation_grid,text="Back",command=lambda:parent.switch_frame(Page_2))
-        back_button.grid(row=3,column=0,padx=2, pady=5,sticky='se')
-        
-        finish_button = ttk.Button(navigation_grid,text="Finish",command=lambda:exit())
-        finish_button.grid(row=3,column=1,padx=2, pady=5,sticky='se')
         self.bind('<Expose>',lambda x:self.update_widgets())
         
     def update_widgets(self):
-        self.Page_greet.config(text=f"Hi, {a.customer['first name']}")
+        self.page_greet.config(text=f"Hi, {a.customer['first name']}")
         self.text.config(state='normal')
         self.text.delete(1.0,'end')
         for i,field in enumerate(a.customer):
