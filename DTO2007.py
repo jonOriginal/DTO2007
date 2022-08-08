@@ -179,7 +179,7 @@ class Page_1(tk.Frame):
             value = float(value)
             if reason == 'focusout':
                 if value < 5 or value > 100:
-                    self.error_container[name].config(text='Please enter a value between 5 and 100')
+                    self.error_container[name].config(text='Please enter a value  between 5 and 100.')
                 else:
                     self.error_container[name].config(text='')
             a.dimensions[name] = value
