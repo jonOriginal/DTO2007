@@ -1,15 +1,14 @@
-"""
-Jonathan Knox
-DTO2007Y2A assignment
-8/9/2022
-"""
+#------------------------------------------------------------------------------
+#DTO2007YA 
+#Jonathan Knox 
+#------------------------------------------------------------------------------
 
 import tkinter as tk 
 from tkinter import END, X, ttk
 from tkinter import messagebox
-
+import time
 class Get_details(dict):
-    """getter, setter, deleter methods for dictionaries"""
+    """Getter, setter and deleter for dictionary items"""
     def __getitem__(self, key) -> str:
         return dict.__getitem__(self, key)
     def __setitem__(self, key, value) -> None:
@@ -176,7 +175,7 @@ class App(tk.Tk):
         
         #create and initialize each page of the application
         self.frame_list = {Start_Page:'',Page_1:'',Page_2:'',Page_3:''}
-        for i, frame_name in enumerate(self.frame_list):
+        for frame_name in self.frame_list:
             frame = frame_name(self,mainframe)
             frame.config(width=500,height=350)
             self.frame_list[frame_name] = frame
@@ -185,7 +184,8 @@ class App(tk.Tk):
     
         #raise the first page of the application
         self.frame_list[Start_Page].tkraise()
-    
+
+        
     def next(self,current: str) -> None:
         #find the page name of the next page
         index = list(self.frame_list.keys()).index(current)+1
@@ -218,13 +218,12 @@ class Start_Page(tk.Frame):
         b.label(self,info_text,1,0,font=('Arial', 12),justify='left',columnspan=4) 
         
         #build the name entry
-        name_entry = b.entry(self,'First Name:',6,0,validatecommand=(reg,'%P'))
-        name_entry.focus()
-        name_entry.bind('<Return>', lambda event: self.next_button.invoke())
-        
+        self.name_entry = b.entry(self,'First Name:',6,0,validatecommand=(reg,'%P'))
+        self.name_entry.bind('<Return>', lambda event: self.next_button.invoke())
         #build the next button
         self.next_button = b.nav_buttons(self,parent,__class__,back=False)
         
+        self.bind('<Expose>', lambda x: self.update_wdigets())
     def callback(self,value:str|int) -> bool:
         """callback function for the name entry
 
@@ -241,10 +240,15 @@ class Start_Page(tk.Frame):
             return True  
         if value == '':
             #if the value is empty, deactivate the next button
-            del a.customer['first name']
             self.next_button.configure(state='disabled')
             return True
 
+    def update_wdigets(self) -> None:
+        """updates the name entry with the current customer name"""
+        self.name_entry.delete(0,END)
+        self.name_entry.insert(0,a.customer['first name'])
+        self.name_entry.focus()
+        
 class Page_1(tk.Frame):
     def __init__(self,parent,container):
         super().__init__(container)
@@ -261,6 +265,7 @@ class Page_1(tk.Frame):
         for i,fields, in enumerate(a.dimensions):
             #validate all events for the entries so that only float values are allowed
             ents = b.entry(measurements,fields.title(),i+1,0,validate='all',validatecommand=(reg, '%P','%V',fields),width=14)
+            ents.bind('<Return>', lambda event: event.widget.tk_focusNext().focus_set())
             self.entries[fields] = ents
         
         #build the error labels
@@ -274,7 +279,7 @@ class Page_1(tk.Frame):
         self.dropbox.grid(row=1,column=0,sticky='ew',padx=15,pady=5)
         
         #when the combo box is changed, confirm if the next button should be activated
-        self.dropbox.bind('<<ComboboxSelected>>',self.confirm_next)
+        self.dropbox.bind('<<ComboboxSelected>>',lambda event: self.confirm_next())
         #when enter is pressed, try to invoke the next button
         self.dropbox.bind('<Return>', lambda event: self.next_button.invoke())
         
@@ -285,8 +290,16 @@ class Page_1(tk.Frame):
         #build the next button
         self.next_button = b.nav_buttons(self,parent,__class__)
         
-        #when class frame is raised, update the name in the title
-        self.bind('<Expose>',lambda x:self.page_greet.config(text=f"Hi, {a.customer['first name']}"))
+        #when class frame is raised, call the update_widgets function
+        self.bind('<Expose>',lambda x:self.update_widgets())
+    def update_widgets(self) -> None:
+        """update the widgets in the class frame"""
+        #update the title greeting name
+        self.page_greet.config(text=f"Hi, {a.customer['first name']}")
+        
+        #focus the first entry if all the entries are empty
+        if all(list(a.dimensions.values())) == False:
+            self.entries['height'].focus()
     
     def callback(self,value: str|float, reason: tk.EventType, name: str) -> bool:
         """callback function for the entry widgets
@@ -366,11 +379,15 @@ class Page_2(tk.Frame):
         #build the title
         self.page_greet = b.header(self,'Please enter your details:')
         
+        #build the next button
+        self.next_button = b.nav_buttons(self,parent,__class__)
+        
         #build labelframe then create each entry for the customer details
         details = b.lframe(self,'Personal Details','These details will be used by the courier:',1,0)
         self.entries=[]
         for i,fields, in enumerate(a.customer):
             ents = b.entry(details,fields.title(),i+1,0,validate='key',validatecommand=(reg, '%P',fields))
+            ents.bind('<Return>', lambda event: event.widget.tk_focusNext().focus_set())
             self.entries.append(ents)
         
         #build labelframe then create each entry for the address details
@@ -378,10 +395,10 @@ class Page_2(tk.Frame):
         address=[]
         for i,fields, in enumerate(a.address):
             ents  = b.entry(addresses,fields.title(),i+1,0,validate='key',validatecommand=(reg_a, '%P',fields),width=13)
+            ents.bind('<Return>', lambda event: event.widget.tk_focusNext().focus_set())
             address.append(ents)
-        
-        #build the next button
-        self.next_button = b.nav_buttons(self,parent,__class__)
+        address[-1].unbind('<Return>')
+        address[-1].bind('<Return>', lambda event:self.next_button.invoke())
         
         #when class frame is raised, call the update_widgets() function
         self.bind('<Expose>',lambda x:self.update_widgets())
@@ -420,11 +437,8 @@ class Page_2(tk.Frame):
     
     def confirm_next(self):
         """confirm if the next button should be activated"""
-        values = [a.customer['first name'],a.customer['last name'],a.customer['phone'],
-                  a.address['address'],a.address['city'],a.address['postcode']]
-        
         #if all the entries are filled, activate the next button
-        if all(values) == True:
+        if all(list(a.customer.values())) == True and all(list(a.address.values())) == True:
             self.next_button.config(state='normal')
         else:
             self.next_button.config(state='disabled')
@@ -434,6 +448,7 @@ class Page_2(tk.Frame):
         self.page_greet.config(text=f"Hi, {a.customer['first name']}")
         self.entries[0].delete(0,END)
         self.entries[0].insert(0,a.customer['first name'])
+        self.entries[0].focus()
         
 class Page_3(tk.Frame):
     def __init__(self,parent,container):
