@@ -3,6 +3,7 @@
 #Jonathan Knox 
 #------------------------------------------------------------------------------
 
+import sys
 import tkinter as tk 
 from tkinter import END, X, ttk
 from tkinter import messagebox
