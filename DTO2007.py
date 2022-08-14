@@ -47,7 +47,7 @@ class Builder():
         title = ttk.Label(frame, text=title, font=("Helvetica", 14), background='#FFFFFF')
         title.grid(row=1, column=0, sticky='ew', pady=20, padx=20)
         
-        if greet == True:
+        if greet is True:
             greet = tk.Label(frame, text=a.customer['first name'], font=('Arial', 12), background='#FFFFFF',justify='left')
             greet.grid(row=0, column=0,sticky='w',padx=15,pady=2.5)
             title.grid(row=1, column=0, sticky='ew', pady=2.5, padx=15)
@@ -298,7 +298,7 @@ class Page_1(tk.Frame):
         self.page_greet.config(text=f"Hi, {a.customer['first name']}")
         
         #focus the first entry if all the entries are empty
-        if all(list(a.dimensions.values())) == False:
+        if all(list(a.dimensions.values())) is False:
             self.entries['height'].focus()
     
     def callback(self,value: str|float, reason: tk.EventType, name: str) -> bool:
@@ -362,7 +362,7 @@ class Page_1(tk.Frame):
         region = self.dropbox.get()
         
         #if all three entries are filled and the region is not empty, activate the next button
-        if all(values) == True and all(map(lambda x: float(x) >= 5 and float(x) <= 100,values)) == True and region:
+        if all(values) is True and all(map(lambda x: float(x) >= 5 and float(x) <= 100,values)) is True and region:
             self.next_button.config(state='normal')
             self.update_price()
         #if any of the entries are empty or the region is empty, deactivate the next button
@@ -438,7 +438,7 @@ class Page_2(tk.Frame):
     def confirm_next(self):
         """confirm if the next button should be activated"""
         #if all the entries are filled, activate the next button
-        if all(list(a.customer.values())) == True and all(list(a.address.values())) == True:
+        if all(list(a.customer.values())) is True and all(list(a.address.values())) is True:
             self.next_button.config(state='normal')
         else:
             self.next_button.config(state='disabled')
