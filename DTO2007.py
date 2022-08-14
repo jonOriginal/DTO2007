@@ -4,9 +4,7 @@
 #------------------------------------------------------------------------------
 
 import tkinter as tk 
-from tkinter import END, X, ttk
-from tkinter import messagebox
-import time
+from tkinter import END, ttk
 class Get_details(dict):
     """Getter, setter and deleter for dictionary items"""
     def __getitem__(self, key) -> str:
