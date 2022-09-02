@@ -241,7 +241,7 @@ class Start_Page(tk.Frame):
             self.next_button.configure(state='disabled')
             return True
 
-    def update_wdigets(self) -> None:
+    def update_widgets(self) -> None:
         """updates the name entry with the current customer name"""
         self.name_entry.delete(0,END)
         self.name_entry.insert(0,a.customer['first name'])
