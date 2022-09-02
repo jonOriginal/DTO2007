@@ -221,7 +221,7 @@ class Start_Page(tk.Frame):
         #build the next button
         self.next_button = b.nav_buttons(self,parent,__class__,back=False)
 
-        self.bind('<Expose>', lambda x: self.update_wdigets())
+        self.bind('<Expose>', lambda x: self.update_widgets())
     def callback(self,value:str|int) -> bool:
         """callback function for the name entry
 
